@@ -11,4 +11,5 @@ class StockspiderItem(scrapy.Item):
     # name = scrapy.Field()
     url = scrapy.Field()
     content = scrapy.Field()
+    url_hash = scrapy.Field()
     pass

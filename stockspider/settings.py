@@ -12,6 +12,9 @@ BOT_NAME = 'stockspider'
 SPIDER_MODULES = ['stockspider.spiders']
 NEWSPIDER_MODULE = 'stockspider.spiders'
 
+FINISH_URL_REDIS_IP = '127.0.0.1'
+FINISH_URL_REDIS_PORT = 6379
+FINISH_URL_REDIS_REQUIREPASS = ''
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'stockspider (+http://www.yourdomain.com)'
@@ -65,6 +68,7 @@ DOWNLOADER_MIDDLEWARES = {
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
    'stockspider.pipelines.StockspiderPipeline': 300,
+   'stockspider.pipelines.URLInsertPipline': 301,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

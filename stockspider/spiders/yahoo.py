@@ -2,22 +2,46 @@ import random
 import re
 import scrapy
 from scrapy import selector
+from scrapy import settings
 from scrapy.item import Item
 from w3lib import url
 import re
-
+import hashlib
+import redis
 from stockspider.items import StockspiderItem
-
+from scrapy.utils.project import get_project_settings
 
 class YahooSpider(scrapy.Spider):
     name = 'yahoo'
     allowed_domains = ['yahoo.com']
     start_urls = ['https://finance.yahoo.com/']
 
+    def __init__(self, name=None, **kwargs):
+        super().__init__(name=name, **kwargs)
+        settings = get_project_settings()
+        redis_server = settings['FINISH_URL_REDIS_IP']
+        redis_port = settings['FINISH_URL_REDIS_PORT']
+        redis_password = settings['FINISH_URL_REDIS_REQUIREPASS']
+        self.__pool__ = redis.ConnectionPool(
+            host=redis_server, port = redis_port, decode_responses=True)
+        self.__redis__ = redis.Redis(connection_pool = self.__pool__)
+        print(settings)
+
+    def __del__(self):
+        self.__redis__.close()
+        self.__pool__.disconnect()
+
     def parse(self, response):
         print(response.request.headers['User-Agent'])
         item = StockspiderItem()
-        item["url"] = response.url.encode('utf-8')
+        url = response.url.encode('utf-8')
+        md5 = hashlib.md5()
+        md5.update(url)
+        url_hash = md5.hexdigest()
+        if(self.__redis__.sismember('url', url_hash)):
+            return
+        item["url_hash"] = url_hash
+        item["url"] = url
         item["content"] = response.body
         url_selector_list = response.xpath("//a")
         for selector in url_selector_list:
@@ -28,8 +52,8 @@ class YahooSpider(scrapy.Spider):
                 continue
             if self.is_url(url) == True:
                 print(url)
-                yield scrapy.http.Request(url, callback=self.parse, dont_filter=False)
-        # yield item
+                yield scrapy.Request(url, callback=self.parse, dont_filter=True)
+        yield item
 
     def is_url(self, url):
         if len(url) <= 0 :
@@ -45,6 +69,6 @@ class YahooSpider(scrapy.Spider):
 
 if __name__ == "__main__":
     import sys
-    # print(sys.argv[0])
-    # from scrapy import cmdline
-    # cmdline.execute("scrapy crawl yahoo".split())
+    print(sys.argv[0])
+    from scrapy import cmdline
+    cmdline.execute("scrapy crawl yahoo".split())
