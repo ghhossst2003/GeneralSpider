@@ -38,8 +38,6 @@ class YahooSpider(scrapy.Spider):
         md5 = hashlib.md5()
         md5.update(url)
         url_hash = md5.hexdigest()
-        if(self.__redis__.sismember('url', url_hash)):
-            return
         item["url_hash"] = url_hash
         item["url"] = url
         item["content"] = response.body
@@ -52,6 +50,8 @@ class YahooSpider(scrapy.Spider):
                 continue
             if self.is_url(url) == True:
                 print(url)
+                if(self.__redis__.sismember('url', url_hash)):
+                    continue
                 yield scrapy.Request(url, callback=self.parse, dont_filter=True)
         yield item
 

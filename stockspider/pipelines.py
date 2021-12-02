@@ -23,7 +23,7 @@ class StockspiderPipeline:
         filename = "html/{0}.html".format(item['url_hash'])
         with open(filename, 'w') as f:
             f.write(item['content'].decode("utf-8"))
-        self.__url_to_file__.write("%s -< : >- %s\r" %(url_string.decode('utf-8'), filename))
+        self.__url_to_file__.write("%s -< : >- %s\r\n" %(url_string.decode('utf-8'), filename))
         self.__url_to_file__.flush()
         return item
 
